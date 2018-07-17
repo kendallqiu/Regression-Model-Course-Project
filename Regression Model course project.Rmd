@@ -1,0 +1,97 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+library(ggplot2)
+data(mtcars)
+mtcars$cyl  <- factor(mtcars$cyl)
+mtcars$vs   <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+mtcars$am   <- factor(mtcars$am,labels=c("Automatic","Manual"))
+#automatic is better for MPG, but we will now quantify his difference
+aggregate(mpg~am, data = mtcars, mean)
+#         am      mpg
+#1 Automatic 17.14737
+#2    Manual 24.39231
+#automatic cars have an MPG 7.25 lower than manual cars
+D_automatic <- mtcars[mtcars$am == "Automatic",]
+D_manual <- mtcars[mtcars$am == "Manual",]
+t.test(D_automatic$mpg, D_manual$mpg)
+#
+#	Welch Two Sample t-test
+#
+#data:  D_automatic$mpg and D_manual$mpg
+#t = -3.7671, df = 18.332, p-value = 0.001374
+#alternative hypothesis: true difference in means is not equal to 0
+#95 percent confidence interval:
+# -11.280194  -3.209684
+#sample estimates:
+#mean of x mean of y 
+# 17.14737  24.39231 
+#this is a significant difference
+init <- lm(mpg ~ am, data = mtcars)
+summary(init)
+#
+#Call:
+#lm(formula = mpg ~ am, data = mtcars)
+#
+#Residuals:
+#    Min      1Q  Median      3Q     Max 
+#-9.3923 -3.0923 -0.2974  3.2439  9.5077 
+#
+#Coefficients:
+#            Estimate Std. Error t value Pr(>|t|)    
+#(Intercept)   17.147      1.125  15.247 1.13e-15 ***
+#amManual       7.245      1.764   4.106 0.000285 ***
+#---
+#Signif. codes:  0 ¡®***¡¯ 0.001 ¡®**¡¯ 0.01 ¡®*¡¯ 0.05 ¡®.¡¯ 0.1 ¡® ¡¯ 1
+#
+#Residual standard error: 4.902 on 30 degrees of freedom
+#Multiple R-squared:  0.3598,	Adjusted R-squared:  0.3385 
+#F-statistic: 16.86 on 1 and 30 DF,  p-value: 0.000285
+#build a multivariate linear regression
+betterFit <- lm(mpg~am + cyl + disp + hp + wt, data = mtcars)
+anova(init, betterFit)
+#Analysis of Variance Table
+#
+#Model 1: mpg ~ am
+#Model 2: mpg ~ am + cyl + disp + hp + wt
+#  Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
+#1     30 720.90                                  
+#2     25 150.41  5    570.49 18.965 8.637e-08 ***
+#---
+#Signif. codes:  0 ¡®***¡¯ 0.001 ¡®**¡¯ 0.01 ¡®*¡¯ 0.05 ¡®.¡¯ 0.1 ¡® ¡¯ 1
+#double-check the residuals for non-normality (Appendix - Plot 3) and can see they are all normally distributed and homoskedastic
+summary(betterFit)
+#
+#Call:
+#lm(formula = mpg ~ am + cyl + disp + hp + wt, data = mtcars)
+#
+#Residuals:
+#    Min      1Q  Median      3Q     Max 
+#-3.9374 -1.3347 -0.3903  1.1910  5.0757 
+#
+#Coefficients:
+#             Estimate Std. Error t value Pr(>|t|)    
+#(Intercept) 33.864276   2.695416  12.564 2.67e-12 ***
+#amManual     1.806099   1.421079   1.271   0.2155    
+#cyl6        -3.136067   1.469090  -2.135   0.0428 *  
+#cyl8        -2.717781   2.898149  -0.938   0.3573    
+#disp         0.004088   0.012767   0.320   0.7515    
+#hp          -0.032480   0.013983  -2.323   0.0286 *  
+#wt          -2.738695   1.175978  -2.329   0.0282 *  
+#---
+#Signif. codes:  0 ¡®***¡¯ 0.001 ¡®**¡¯ 0.01 ¡®*¡¯ 0.05 ¡®.¡¯ 0.1 ¡® ¡¯ 1
+#
+#Residual standard error: 2.453 on 25 degrees of freedom
+#Multiple R-squared:  0.8664,	Adjusted R-squared:  0.8344 
+#F-statistic: 27.03 on 6 and 25 DF,  p-value: 8.861e-10
+#
+boxplot(mpg ~ am, data = mtcars, col = (c("red","blue")), ylab = "Miles Per Gallon", xlab = "Transmission Type") #Plot 1: Boxplot of MPG by transmission type
+pairs(mpg ~ ., data = mtcars) #Plot 2: Pairs plot for the data set
+par(mfrow = c(2,2)) #Plot 3: Check residuals
+plot(betterFit)
+```
